@@ -742,7 +742,6 @@ wheels = [
 
 [[package]]
 name = "pybiorythm-django-dashboard-example"
-version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
