@@ -30,7 +30,7 @@ A Django web dashboard with HTMX and Plotly visualizations consuming PyBiorythm 
 
 ## 🚀 Quick Start
 
-1. **Prerequisites**: Python 3.9+, [uv](https://github.com/astral-sh/uv), PyBiorythm API server running
+1. **Prerequisites**: Python 3.10+, [uv](https://github.com/astral-sh/uv), PyBiorythm API server running
 
 2. **Clone and setup**:
    ```bash
@@ -61,7 +61,7 @@ A Django web dashboard with HTMX and Plotly visualizations consuming PyBiorythm 
 
 ### Prerequisites
 
-- **Python 3.9+**
+- **Python 3.10+**
 - **[uv](https://github.com/astral-sh/uv)** package manager
 - **PyBiorythm API Server** (see [pybiorythm-django-api-server-example](https://github.com/dkdndes/pybiorythm-django-api-server-example))
 
