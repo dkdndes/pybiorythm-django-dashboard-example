@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart Test</title>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+</head>
+<body>
+    <h1>Chart Rendering Test</h1>
+    
+    <div id="test-chart" style="width:100%;height:400px;"></div>
+    
+    <script>
+        // Test data from our API
+        fetch('/charts/person/1/line/')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Received data:', data);
+                
+                if (data.chart_data) {
+                    const chartData = JSON.parse(data.chart_data);
+                    console.log('Parsed chart data:', chartData);
+                    
+                    Plotly.newPlot('test-chart', chartData.data, chartData.layout, data.config);
+                    console.log('Chart rendered successfully');
+                } else {
+                    console.error('No chart_data in response');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

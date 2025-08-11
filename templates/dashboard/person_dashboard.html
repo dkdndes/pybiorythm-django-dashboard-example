@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ person.name|default:"Person" }} - PyBiorythm Dashboard{% endblock %}
+
+{% block content %}
+{% if error_message %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error
+                </h4>
+                <p>{{ error_message }}</p>
+                <a href="{% url 'dashboard:home' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'dashboard:home' %}">
+                            <i class="bi bi-house me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ person.name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 fw-bold mb-1">
+                        <i class="bi bi-person-circle text-primary me-2"></i>
+                        {{ person.name }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Born {{ person.birthdate|date:"F d, Y" }} 
+                        ({{ person.age_in_days|floatformat:0 }} days old)
+                    </p>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <!-- Date Range Controls -->
+                    <form method="get" class="d-flex gap-2">
+                        <input type="date" 
+                               class="form-control form-control-sm" 
+                               name="start_date" 
+                               value="{{ data_info.start_date|date:'Y-m-d' }}"
+                               title="Start Date">
+                        <input type="date" 
+                               class="form-control form-control-sm" 
+                               name="end_date" 
+                               value="{{ data_info.end_date|date:'Y-m-d' }}"
+                               title="End Date">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-funnel"></i>
+                        </button>
+                    </form>
+                    
+                    <!-- Calculate Button -->
+                    <button class="btn btn-success btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#calculate-modal">
+                        <i class="bi bi-calculator me-1"></i>
+                        Calculate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Info -->
+    {% if data_info %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <i class="bi bi-calendar-range text-primary"></i>
+                            <div class="small">Date Range</div>
+                            <div class="fw-bold">
+                                {{ data_info.start_date|date:"M d" }} - {{ data_info.end_date|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="bi bi-graph-up text-success"></i>
+                            <div class="small">Data Points</div>
+                            <div class="fw-bold">{{ data_info.data_points|floatformat:0 }}</div>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="bi bi-calendar-check text-info"></i>
+                            <div class="small">Available From</div>
+                            <div class="fw-bold">
+                                {% if data_info.date_range.start %}
+                                    {{ data_info.date_range.start|date:"M d, Y" }}
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <i class="bi bi-calendar-x text-warning"></i>
+                            <div class="small">Available To</div>
+                            <div class="fw-bold">
+                                {% if data_info.date_range.end %}
+                                    {{ data_info.date_range.end|date:"M d, Y" }}
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Charts Section -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Chart Tabs -->
+            <ul class="nav nav-tabs chart-tabs mb-4" id="chart-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" 
+                            id="line-chart-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#line-chart-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-graph-up me-1"></i>
+                        Biorhythm Cycles
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" 
+                            id="distribution-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#distribution-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-bar-chart me-1"></i>
+                        Distribution
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" 
+                            id="critical-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#critical-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Critical Days
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" 
+                            id="phases-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#phases-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-circle me-1"></i>
+                        Current Phases
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" 
+                            id="correlation-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#correlation-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-diagram-3 me-1"></i>
+                        Correlations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" 
+                            id="statistics-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#statistics-pane" 
+                            type="button" 
+                            role="tab">
+                        <i class="bi bi-pie-chart me-1"></i>
+                        Statistics
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="chart-content">
+                <!-- Line Chart -->
+                <div class="tab-pane fade show active" id="line-chart-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="line-chart" 
+                                 hx-get="{% url 'dashboard:chart_line' person.id %}{% if request.GET.start_date %}?start_date={{ request.GET.start_date }}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% elif request.GET.end_date %}?end_date={{ request.GET.end_date }}{% endif %}"
+                                 hx-trigger="load"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div class="tab-pane fade" id="distribution-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="distribution-chart" 
+                                 hx-get="{% url 'dashboard:chart_distribution' person.id %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Critical Days Chart -->
+                <div class="tab-pane fade" id="critical-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="critical-chart" 
+                                 hx-get="{% url 'dashboard:chart_critical' person.id %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phases Chart -->
+                <div class="tab-pane fade" id="phases-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="phases-chart" 
+                                 hx-get="{% url 'dashboard:chart_phases' person.id %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correlation Chart -->
+                <div class="tab-pane fade" id="correlation-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="correlation-chart" 
+                                 hx-get="{% url 'dashboard:chart_correlation' person.id %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Chart -->
+                <div class="tab-pane fade" id="statistics-pane" role="tabpanel">
+                    <div class="chart-container">
+                        <div class="loading-spinner text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="statistics-chart" 
+                                 hx-get="{% url 'dashboard:chart_statistics' person.id %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    {% if statistics %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-down me-2"></i>
+                            Statistics Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Cycle Averages</h6>
+                                <ul class="list-unstyled">
+                                    <li>
+                                        <span class="text-danger">Physical:</span> 
+                                        {{ statistics.statistics.cycle_averages.physical|floatformat:3|default:"N/A" }}
+                                    </li>
+                                    <li>
+                                        <span class="text-info">Emotional:</span> 
+                                        {{ statistics.statistics.cycle_averages.emotional|floatformat:3|default:"N/A" }}
+                                    </li>
+                                    <li>
+                                        <span class="text-primary">Intellectual:</span> 
+                                        {{ statistics.statistics.cycle_averages.intellectual|floatformat:3|default:"N/A" }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Critical Days</h6>
+                                <ul class="list-unstyled">
+                                    <li>
+                                        <span class="text-muted">Total:</span> 
+                                        {{ statistics.statistics.critical_days.total }} 
+                                        ({{ statistics.statistics.critical_days.percentage }}%)
+                                    </li>
+                                    <li>
+                                        <span class="text-danger">Physical:</span> 
+                                        {{ statistics.statistics.critical_days.breakdown.physical }}
+                                    </li>
+                                    <li>
+                                        <span class="text-info">Emotional:</span> 
+                                        {{ statistics.statistics.critical_days.breakdown.emotional }}
+                                    </li>
+                                    <li>
+                                        <span class="text-primary">Intellectual:</span> 
+                                        {{ statistics.statistics.critical_days.breakdown.intellectual }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+<!-- Calculate Modal -->
+<div class="modal fade" id="calculate-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form hx-post="{% url 'dashboard:calculate_biorhythm' person.id %}"
+                  hx-target="#calculation-result"
+                  hx-swap="innerHTML">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calculator me-2"></i>
+                        Calculate Biorhythm Data
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="days" class="form-label">Number of Days</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="days" 
+                               name="days" 
+                               value="365" 
+                               min="1" 
+                               max="3650" 
+                               required>
+                        <div class="form-text">Calculate biorhythm data for this many days (1-3650)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="2" 
+                                  placeholder="Add any notes about this calculation..."></textarea>
+                    </div>
+                    <div id="calculation-result"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-calculator me-1"></i>
+                        Calculate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle HTMX chart responses
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful && evt.detail.xhr.responseText) {
+            try {
+                const response = JSON.parse(evt.detail.xhr.responseText);
+                if (response.chart_data && response.config) {
+                    const targetId = evt.detail.target.id;
+                    renderChart(targetId, response.chart_data, response.config);
+                }
+            } catch (error) {
+                console.error('Error handling chart response:', error);
+            }
+        }
+    });
+
+    // Tab switching
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+        tabButtons.forEach(button => {
+            button.addEventListener('shown.bs.tab', function(event) {
+                // Trigger chart loading when tab becomes visible
+                const targetPane = document.querySelector(event.target.getAttribute('data-bs-target'));
+                const chartElement = targetPane.querySelector('[hx-get]');
+                if (chartElement && !chartElement.classList.contains('htmx-request')) {
+                    htmx.trigger(chartElement, 'intersect');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

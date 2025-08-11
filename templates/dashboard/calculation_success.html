@@ -1,0 +1,41 @@
+<div class="alert alert-success" role="alert">
+    <h6 class="alert-heading">
+        <i class="bi bi-check-circle me-2"></i>
+        Calculation Complete!
+    </h6>
+    <p class="mb-2">Successfully calculated biorhythm data.</p>
+    
+    {% if calculation %}
+        <div class="row small">
+            <div class="col-6">
+                <strong>Date Range:</strong><br>
+                {{ calculation.start_date|date:"M d, Y" }} - {{ calculation.end_date|date:"M d, Y" }}
+            </div>
+            <div class="col-6">
+                <strong>Data Points Created:</strong><br>
+                {{ data_points_created|default:calculation.days_calculated }}
+            </div>
+        </div>
+        
+        {% if calculation.pybiorythm_version %}
+            <div class="mt-2 small text-muted">
+                PyBiorythm version: {{ calculation.pybiorythm_version }}
+            </div>
+        {% endif %}
+    {% endif %}
+    
+    <hr>
+    <p class="mb-0">
+        <small>
+            The page will refresh automatically to show the new data, or you can 
+            <a href="javascript:location.reload()" class="alert-link">refresh manually</a>.
+        </small>
+    </p>
+</div>
+
+<script>
+    // Auto-refresh the page after successful calculation
+    setTimeout(function() {
+        location.reload();
+    }, 3000);
+</script>

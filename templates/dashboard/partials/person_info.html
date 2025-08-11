@@ -1,0 +1,138 @@
+{% if person %}
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Personal Information</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Name:</strong></td>
+                    <td>{{ person.name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Birthdate:</strong></td>
+                    <td>{{ person.birthdate|date:"F d, Y" }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Age (days):</strong></td>
+                    <td>{{ person.age_in_days|floatformat:0 }}</td>
+                </tr>
+                {% if person.email %}
+                <tr>
+                    <td><strong>Email:</strong></td>
+                    <td>{{ person.email }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td><strong>Created:</strong></td>
+                    <td>{{ person.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% if person.updated_at != person.created_at %}
+                <tr>
+                    <td><strong>Updated:</strong></td>
+                    <td>{{ person.updated_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        
+        <div class="col-md-6">
+            <h6>Data Summary</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Data Points:</strong></td>
+                    <td>{{ person.biorhythm_data_count|default:0 }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Latest Calculation:</strong></td>
+                    <td>
+                        {% if person.latest_calculation_date %}
+                            {{ person.latest_calculation_date|date:"M d, Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">No calculations</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if statistics %}
+                <tr>
+                    <td><strong>Date Range:</strong></td>
+                    <td>
+                        {% if statistics.statistics.date_range.start %}
+                            {{ statistics.statistics.date_range.start|date:"M d, Y" }} - 
+                            {{ statistics.statistics.date_range.end|date:"M d, Y" }}
+                        {% else %}
+                            <span class="text-muted">No data available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Total Data Points:</strong></td>
+                    <td>{{ statistics.statistics.total_data_points|default:0 }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Critical Days:</strong></td>
+                    <td>
+                        {{ statistics.statistics.critical_days.total|default:0 }}
+                        {% if statistics.statistics.critical_days.percentage %}
+                            ({{ statistics.statistics.critical_days.percentage }}%)
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    
+    {% if person.notes %}
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Notes</h6>
+                <p class="text-muted">{{ person.notes }}</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    {% if statistics and statistics.statistics.cycle_averages %}
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Cycle Averages</h6>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="text-danger fw-bold">
+                                    {{ statistics.statistics.cycle_averages.physical|floatformat:3|default:"N/A" }}
+                                </div>
+                                <small class="text-muted">Physical</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="text-info fw-bold">
+                                    {{ statistics.statistics.cycle_averages.emotional|floatformat:3|default:"N/A" }}
+                                </div>
+                                <small class="text-muted">Emotional</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                <div class="text-primary fw-bold">
+                                    {{ statistics.statistics.cycle_averages.intellectual|floatformat:3|default:"N/A" }}
+                                </div>
+                                <small class="text-muted">Intellectual</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-person-x display-4 text-muted"></i>
+        <h5 class="text-muted mt-3">Person Not Found</h5>
+        <p class="text-muted">Unable to load person information.</p>
+    </div>
+{% endif %}

@@ -1,0 +1,105 @@
+{% if people %}
+    <div class="row">
+        {% for person in people %}
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card person-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person me-2"></i>
+                            {{ person.name }}
+                        </h5>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                Born: {{ person.birthdate|date:"M d, Y" }}
+                            </small>
+                        </div>
+                        
+                        {% if person.email %}
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-envelope me-1"></i>
+                                    {{ person.email }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="small text-muted">Age (days)</div>
+                                <div class="fw-bold">{{ person.age_in_days|floatformat:0 }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="small text-muted">Data Points</div>
+                                <div class="fw-bold">{{ person.biorhythm_data_count|default:0 }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="small text-muted">Latest Calc</div>
+                                <div class="fw-bold">
+                                    {% if person.latest_calculation_date %}
+                                        {{ person.latest_calculation_date|date:"M d" }}
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if person.notes %}
+                            <p class="card-text small text-muted">{{ person.notes|truncatewords:10 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button class="btn btn-outline-info btn-sm"
+                                    hx-get="{% url 'dashboard:person_info_partial' person.id %}"
+                                    hx-target="#person-info-modal .modal-body"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#person-info-modal">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Info
+                            </button>
+                            <a href="{% url 'dashboard:person_dashboard' person.id %}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="bi bi-graph-up me-1"></i>
+                                Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Person Info Modal -->
+    <div class="modal fade" id="person-info-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Person Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Content loaded via HTMX -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-people display-1 text-muted"></i>
+        <h4 class="text-muted mt-3">No People Found</h4>
+        <p class="text-muted">
+            {% if search_query %}
+                No people match your search "{{ search_query }}".
+            {% else %}
+                No people are available in the system.
+            {% endif %}
+        </p>
+    </div>
+{% endif %}

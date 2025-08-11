@@ -1,0 +1,104 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        version: "latest"
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: uv sync --extra dev
+    
+    - name: Run ruff linting
+      run: uv run ruff check .
+    
+    - name: Run ruff formatting check
+      run: uv run ruff format --check .
+    
+    - name: Run bandit security scan
+      run: uv run bandit -r biorhythm_dashboard/ dashboard/ --exclude "**/migrations/**"
+    
+    - name: Run safety dependency check
+      run: uv run safety check
+    
+    - name: Run migrations
+      run: uv run python manage.py migrate
+      env:
+        DJANGO_SETTINGS_MODULE: biorhythm_dashboard.settings
+    
+    - name: Run tests
+      run: uv run python manage.py test
+      env:
+        DJANGO_SETTINGS_MODULE: biorhythm_dashboard.settings
+    
+    - name: Test dashboard pages
+      run: |
+        # Start server in background
+        uv run python manage.py runserver 8002 &
+        sleep 10
+        
+        # Test dashboard endpoints
+        curl -f http://localhost:8002/ || exit 1
+        curl -f http://localhost:8002/admin/ || exit 1
+      env:
+        DJANGO_SETTINGS_MODULE: biorhythm_dashboard.settings
+    
+    - name: Run coverage
+      run: |
+        uv run coverage run --source='.' manage.py test
+        uv run coverage report --fail-under=70
+      env:
+        DJANGO_SETTINGS_MODULE: biorhythm_dashboard.settings
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: docker build -t pybiorythm-dashboard .
+    
+    - name: Test Docker image
+      run: |
+        docker run --rm -d -p 8002:8002 --name test-dashboard pybiorythm-dashboard
+        sleep 15
+        curl -f http://localhost:8002/ || exit 1
+        docker stop test-dashboard
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+    
+    - name: Install dependencies
+      run: uv sync --extra dev
+    
+    - name: Run Django security checks
+      run: uv run python manage.py check --deploy
+    
+    - name: Run bandit security scan
+      run: uv run bandit -r biorhythm_dashboard/ dashboard/ --exclude "**/migrations/**"
+    
+    - name: Run safety dependency check
+      run: uv run safety check

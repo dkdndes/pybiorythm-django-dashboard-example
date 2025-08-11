@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}PyBiorythm Dashboard - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold">
+                <i class="bi bi-activity text-primary me-2"></i>
+                PyBiorythm Dashboard
+            </h1>
+            {% if api_connected %}
+                <span class="badge bg-success fs-6">
+                    <i class="bi bi-check-circle me-1"></i>
+                    API Connected
+                </span>
+            {% else %}
+                <span class="badge bg-danger fs-6">
+                    <i class="bi bi-x-circle me-1"></i>
+                    API Disconnected
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if error_message %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Connection Error
+                </h4>
+                <p>{{ error_message }}</p>
+                <hr>
+                <p class="mb-0">
+                    <small>
+                        Please ensure the PyBiorythm API server is running at: 
+                        <code>{{ settings.PYBIORYTHM_API_BASE_URL }}</code>
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if api_connected %}
+    <!-- Global Statistics -->
+    {% if global_stats %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="mb-3">
+                    <i class="bi bi-bar-chart me-2"></i>
+                    Global Statistics
+                </h3>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ global_stats.total_people }}</h5>
+                        <p class="card-text">Total People</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">{{ global_stats.total_calculations }}</h5>
+                        <p class="card-text">Calculations</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">{{ global_stats.total_data_points|floatformat:0 }}</h5>
+                        <p class="card-text">Data Points</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">{{ global_stats.total_critical_days }}</h5>
+                        <p class="card-text">Critical Days</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- People List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>
+                    <i class="bi bi-people me-2"></i>
+                    People
+                </h3>
+                <div class="d-flex gap-2">
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="Search people..." 
+                           style="width: 250px;"
+                           hx-get="{% url 'dashboard:people_list_partial' %}"
+                           hx-target="#people-list"
+                           hx-trigger="keyup changed delay:500ms"
+                           name="search">
+                    <button class="btn btn-outline-secondary"
+                            hx-get="{% url 'dashboard:people_list_partial' %}"
+                            hx-target="#people-list">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="people-list">
+                {% include 'dashboard/partials/people_list.html' %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- API Information -->
+{% if api_info %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        API Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>API Name:</strong></td>
+                                    <td>{{ api_info.api_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Version:</strong></td>
+                                    <td>{{ api_info.version }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>PyBiorythm Available:</strong></td>
+                                    <td>
+                                        {% if api_info.pybiorythm_available %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Server Time:</strong></td>
+                                    <td>{{ api_info.server_time|date:"Y-m-d H:i:s T" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Authentication:</strong></td>
+                                    <td>{{ api_info.authentication }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Page Size:</strong></td>
+                                    <td>{{ api_info.pagination.page_size }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh people list every 5 minutes
+    setInterval(function() {
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput && !searchInput.value) {
+            htmx.trigger('#people-list', 'refresh');
+        }
+    }, 300000);
+</script>
+{% endblock %}

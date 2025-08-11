@@ -1,0 +1,26 @@
+<div class="alert alert-danger" role="alert">
+    <h6 class="alert-heading">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Calculation Failed
+    </h6>
+    <p class="mb-2">Unable to calculate biorhythm data.</p>
+    
+    {% if error %}
+        <div class="small">
+            <strong>Error Details:</strong><br>
+            <code>{{ error }}</code>
+        </div>
+    {% endif %}
+    
+    <hr>
+    <p class="mb-0">
+        <small>
+            Please check that:
+            <ul class="small mb-0">
+                <li>The PyBiorythm API server is running</li>
+                <li>The person exists in the database</li>
+                <li>The calculation parameters are valid</li>
+            </ul>
+        </small>
+    </p>
+</div>
